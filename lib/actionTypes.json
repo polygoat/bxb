@@ -1,0 +1,24 @@
+{
+	"transactional": {
+		"Calc": {
+			"description": "simple calculations"
+		},
+		"Fetch": {
+			"description": "lazy-loading from APIs"
+		},
+		"Search": {
+			"description": ""
+		},
+		"Constructor": {
+			
+		}
+	},
+	"non-transactional": {
+		"BeginTransaction": {},
+		"UpdateTransaction": {},
+		"CancelTransaction": {},
+		"Commit": {},
+		"ResearchActivity": {},
+		"CancelActivity": {}
+	}
+}

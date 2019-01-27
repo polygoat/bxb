@@ -1,0 +1,50 @@
+{
+	"Business": 	{
+		"appName": "viv.business",
+		"description": ""
+	},
+	"Contact": 		{
+		"appName": "viv.contact",
+		"description": ""
+	},
+	"DateTime": 	{
+		"appName": "viv.time",
+		"description": ""
+	},
+	"Entity": 		{
+		"appName": "viv.entity",
+		"description": ""
+	},
+	"Geography": 	{
+		"appName": "viv.geo",
+		"description": ""
+	},
+	"Image": 		{
+		"appName": "viv.image",
+		"description": ""
+	},
+	"Measurement": 	{
+		"appName": "viv.measurement",
+		"description": ""
+	},
+	"Money": 		{
+		"appName": "viv.money",
+		"description": ""
+	},
+	"Navigation": 	{
+		"appName": "viv.navigation",
+		"description": ""
+	},
+	"Open Hours": 	{
+		"appName": "viv.openHours",
+		"description": ""
+	},
+	"Profile": 		{
+		"appName": "viv.self",
+		"description": ""
+	},
+	"Rating": 		{
+		"appName": "viv.rating",
+		"description": ""
+	}
+}

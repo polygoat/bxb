@@ -1,0 +1,38 @@
+{
+  "name": "bixby-toolkit",
+  "version": "0.0.1",
+  "description": "CLI tools for easy bootstrapping of capsules for Samsung's voice assistant Bixby",
+  "main": "btk.js",
+  "scripts": {
+    "pkg": "pkg btk.js --target=node8-win-x64 -o bixbytk.exe",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "bin": {
+    "bxb": "./btk.js"
+  },
+  "keywords": [
+    "bixby",
+    "toolkit",
+    "bootstrap",
+    "boilerplate",
+    "templates"
+  ],
+  "pkg": {
+    "assets": "templates/**/*"
+  },
+  "author": "Dan Borufka",
+  "license": "ISC",
+  "dependencies": {
+    "args": "^5.0.0",
+    "caller-id": "^0.1.0",
+    "commander": "^2.19.0",
+    "dot": "^1.1.2",
+    "fuzzy": "^0.1.3",
+    "glob": "^7.1.3",
+    "inquirer": "^6.2.1",
+    "inquirer-autocomplete-prompt": "^1.0.1",
+    "inquirer-prompt-suggest": "^0.1.0",
+    "lodash": "^4.17.11",
+    "node-glob": "^1.2.0"
+  }
+}

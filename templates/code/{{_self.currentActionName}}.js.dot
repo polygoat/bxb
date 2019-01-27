@@ -1,0 +1,5 @@
+function {{_self.currentActionName[0].toLowerCase()}}{{_self.currentActionName.slice(1)}}($vivContext) {
+	// add your code here...
+}
+
+module.exports.function = {{_self.currentActionName[0].toLowerCase()}}{{_self.currentActionName.slice(1)}};

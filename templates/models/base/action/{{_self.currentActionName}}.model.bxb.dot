@@ -1,0 +1,7 @@
+action ({{_self.currentActionName}}) {
+  description ({{_self.currentActionDescription}})
+  type ({{_self.currentActionType}})
+  collect {
+
+  }
+}

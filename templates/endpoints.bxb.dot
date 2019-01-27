@@ -1,0 +1,11 @@
+endpoints {
+  authorization {
+   none
+  }
+  action-endpoints {
+    action-endpoint ({{_self.currentActionName}}) {
+      accepted-inputs ($vivContext)
+      local-endpoint ("{{_self.currentActionName}}.js")
+    }
+  }
+}

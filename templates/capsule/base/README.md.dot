@@ -1,0 +1,15 @@
+# {{_self.the_field('app.name', 'UnnamedApp', 'Name of the capsule')}} capsule
+# target: {{_self.the_field('app.targetDevice', 'mobile', 'Target device')}}
+
+### How to add training data
+
+1. 
+1.1
+```
+[g:{{_self.the_field('app.namespace', 'bixby', 'Namespace (e.g. your company name)')}}.{{_self.the_field('app.name', 'UnnamedApp', 'Name of the capsule')}}.FirstGoal] Add your (training)[v:{{_self.get_namespace()}}:JustAnExample] examples here
+```
+
+### How to support HEF
+```
+[g:{{_self.get_namespace()}}.FirstGoal] Add your (training)[v:{{_self.get_namespace()}}:JustAnExample] examples here
+```

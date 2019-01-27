@@ -1,0 +1,19 @@
+capsule {
+  id ({{_self.the_field('app.namespace', 'bixby', 'Namespace (e.g. your company name)')}}.{{_self.the_field('app.name', 'UnnamedApp', 'Name of the capsule')}}})
+  version ({{_self.the_field('app.version', '1.0.0', 'Version number')}})
+
+  targets {
+    target (bixby-mobile-{{_self.the_field('app.language', 'en-US', 'Language code (2 hyphenated letter pairs)')}})
+  }
+
+  capsule-imports {
+    
+  }
+
+  format (3)
+  client-context-mapper (context-mapper.js::mapper)
+
+  permissions {
+    user-profile-access
+  }
+}

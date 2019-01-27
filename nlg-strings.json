@@ -1,0 +1,40 @@
+[
+    {
+        "template-macro-def": {
+            "content": {
+                "choose": {
+                    "entries": [
+                        {
+                            "template": {
+                                "speech": "And another one",
+                                "parameters": [
+                                    "And another one"
+                                ]
+                            }
+                        },
+                        {
+                            "template": {
+                                "speech": "One more!",
+                                "parameters": [
+                                    "One more!"
+                                ]
+                            }
+                        },
+                        {
+                            "template": {
+                                "parameters": "There we go :)",
+                                "speech": "There we go :)"
+                            }
+                        }
+                    ],
+                    "parameters": [
+                        "Random"
+                    ]
+                }
+            },
+            "parameters": [
+                "SamsungIoT_1_1_TurnOnAutomation_FunctionAlreadySet_YesOrNo_Yes"
+            ]
+        }
+    }
+]
