@@ -47,27 +47,28 @@ module.exports = {
 
 	appName: 
 	{
-		type: 	'input',
 		message: 'Name of the app',
 		default: 'AppName'
 	},
 
+	appNamespace: {
+		message: 	'Namespace (e.g. your company name)',
+		default: 	'bixby'
+	},
+
 	description: 
 	{
-		type: 	 'input',
 		message: 'Please provide a brief description!'
 	},
 
 	utterance:
 	{
-		type: 	'input',
 		loop: 	true,
 		message:'What [other ]utterance do you want your app to support?'
 	},
 
 	nlgID: 	
 	{
-		type: 			'autocomplete',
 		message: 		'Select the according responset set:',
 		suggestOnly: 	true,
 		source: 		(answersSoFar, input) => {
@@ -82,17 +83,14 @@ module.exports = {
 
 	vocabName:
 	{
-		type: 			'input',
 		message: 		'Name of the vocab?'
 	},
 	actionName:
 	{
-		type: 			'input',
 		message: 		'Name of the action?'
 	},
 	actionType:
 	{
-		type: 			'autocomplete',
 		message: 		'Pick an action type',
 		pageSize: 		8,
 		source: 		function(answersSoFar, input) {
@@ -109,7 +107,6 @@ module.exports = {
 
 	library:
 	{
-		type: 			'autocomplete',
 		message: 		'Choose a library!',
 		source: 		function(answersSoFar, input) {
 							let suggestions = Object.keys(Libs);
@@ -119,22 +116,18 @@ module.exports = {
 	},
 
 	newNlgID: {
-		type: 			'input',
 		message: 		'Name for the new dialog ID?'
 	},
 	responseDisplay:		
 	{
-		type: 			'input',
 		message: 		'What response do you want to be shown on the screen?'
 	},
 	responseSpoken:		
 	{
-		type: 			'input',
 		message: 		'What response do you want to be spoken out?'
 	},
 	responseNr:
 	{
-		type: 			'autocomplete',
 		message: 		'Select the response:',
 		source: 		function(answersSoFar, input) {
 							const dialogs = BixbyFormat.dialogs.load(self.getPath('nlgFile'));

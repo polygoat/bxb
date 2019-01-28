@@ -22,7 +22,17 @@ const globals = {
 	get_namespace: 	() => [_.get(BixbyToolkit.data, 'app.namespace', 'undefined'), _.get(BixbyToolkit.data, 'app.name', 'unnamed')].join('.'), 
 	the_field: 		(name, defaultValue, description) => {
 						const active = _.get(BixbyToolkit.data, name);
-						const question = _.find(BixbyToolkit.questions, {name});
+						let question = _.find(BixbyToolkit.questions, {name});
+
+						const promptKey = name.replace(/(\.[a-z])/g, val => val.slice(1).toUpperCase());
+
+						if(promptKey in Prompts) {
+							question = Prompts[promptKey];
+							question.type = 'source' in question ? 'autocomplete' : 'input';
+							question.name = promptKey;
+							console.log('prompt', promptKey, question);
+						}
+
 
 						if(!active) {
 							_.set(BixbyToolkit.data, name, defaultValue);
@@ -358,6 +368,12 @@ class BixbyToolkit {
 				const count = _.get(this.__askForMissingParameters, `counts.${parameter}`, 0) + 1;
 				const isLoop = !!prompt.loop;
 
+				if('source' in prompt) {
+					prompt.type = 'autocomplete';
+				} else {
+					prompt.type = 'input';
+				}
+
 				prompt.name = parameter;
 				isNecessary = true;
 
@@ -368,7 +384,6 @@ class BixbyToolkit {
 				} else {
 					prompt.message = prompt.message.replace(/[\[\]]/g, '');
 				}
-
 				//console.log('count', _.get(this.__askForMissingParameters, `counts.${parameter}`, 0));
 
 				inquirer
