@@ -13,6 +13,10 @@ const BixbyIO = require('./BixbyIO');
 const BixbyFormat = require('./lib/BixbyFormat');
 const Utils = require('./lib/utils');
 const Prompts = require('./prompts');
+const Libs = require('./lib/Libs')
+
+const throwError = message => console.log(`\x1b[31m${message}\x1b[0m`);
+const throwWarning = message => console.log(` \x1b[33m\u26A0 ${message}\x1b[0m`);
 
 __BTK_VERSION = '0.0.1';
 
@@ -30,7 +34,6 @@ const globals = {
 							question = Prompts[promptKey];
 							question.type = 'source' in question ? 'autocomplete' : 'input';
 							question.name = promptKey;
-							console.log('prompt', promptKey, question);
 						}
 
 
@@ -66,22 +69,50 @@ class BixbyToolkit {
 		this.verbose = false;
 		this.silent = false;
 
+		this.isCapsule = false;
+
 		_.extend(this, options);
 
-		if(fs.existsSync(BixbyToolkit.configPath)) {
-			const configs = JSON.parse(fs.readFileSync(BixbyToolkit.configPath, 'utf8'));
+		const capsuleFilePath = path.join(this.targetPath, 'capsule.bxb');
 
-			globals.timestamp = +new Date();
-			BixbyToolkit.lastChange = globals.timestamp - configs.timestamp;
-			BixbyToolkit.isProjectDirectory = true;
+		if(fs.existsSync(capsuleFilePath)) {
+			this.isCapsule = true;
+
+			if(!fs.existsSync(BixbyToolkit.configPath)) {
+				
+				let capsuleInfo = BixbyIO.read(capsuleFilePath)[0].capsule.entries;
+				capsuleInfo = _.extend.apply(_, capsuleInfo);
+
+				const name = path.basename(this.targetPath);
+				const namespace = capsuleInfo.id.split('.').slice(0,-1).join('.');
+				const version = capsuleInfo.version;
+
+				const target = capsuleInfo.targets.entries[0].target.replace('bixby-', '').split('-');
+				const targetDevice = target[0];
+				const language = target.slice(1).join('-');
+
+				globals.app = { name, namespace, version, language, targetDevice };
+				BixbyToolkit.isProjectDirectory = true;
+
+				this.saveConfig();
+			} else {
+				const configs = JSON.parse(fs.readFileSync(BixbyToolkit.configPath, 'utf8'));
+
+				globals.timestamp = +new Date();
+				BixbyToolkit.lastChange = globals.timestamp - configs.timestamp;
+				BixbyToolkit.isProjectDirectory = true;
 
 				_.defaultsDeep(BixbyToolkit.data, configs);
+				
+			}
 		}
+
 		_.defaultsDeep(BixbyToolkit.data, globals);
 
 
 		this.CLI = {
 			config: 			(name, value) => {
+									if(!this.__isInsideCapsuleFolder()) return;
 									const question = _.find(BixbyToolkit.questions, { name });
 									
 									if(value) {
@@ -92,7 +123,7 @@ class BixbyToolkit {
 										if(question)
 											console.log(question.value);
 										else 
-											console.error(`Error! Configuration "${name}" doesn't exist.`);
+											throwError(`Error! Configuration "${name}" doesn't exist.`);
 									} else {
 										this.__reaskQuestions();
 									}
@@ -111,11 +142,11 @@ class BixbyToolkit {
 									BixbyToolkit.configPath = path.resolve(path.join(this.targetPath, '/.btk-project'));
 
 									this.__copyModule('capsule', 'base', false, () => {
-
 										BTK.saveConfig();
 									});
 								},
 			'utterance add': 	(utterance) => {
+									if(!this.__isInsideCapsuleFolder()) return;
 									const userInput = this.__askForMissingParameters(this.CLI['utterance add'], { utterance });
 									if(userInput.isNecessary) return;
 									
@@ -130,19 +161,21 @@ class BixbyToolkit {
 									BixbyIO.save(hints);
 								},
 			'responseset add': 	(newNlgID, ...options) => {
+									if(!this.__isInsideCapsuleFolder()) return;
 									const userInput = this.__askForMissingParameters(this.CLI['responseset add'], { newNlgID });
 									if(userInput.isNecessary) return;
 									
 									const dialogs = BixbyFormat.dialogs.load(this.getPath('nlgFile'));
 
 									if(newNlgID in BixbyIO.read.parsers.dialog.data.NLG_IDs) {
-										console.error(`${nlgID} already exists!`);
+										throwError(`${nlgID} already exists!`);
 									} else {
 										dialogs.push(BixbyFormat.dialogs.createResponseSet(newNlgID));										
 										BixbyIO.write(this.getPath('nlgFile'), dialogs);
 									}
 								},
 			'response add': 	(nlgID, responseDisplay, responseSpoken) => {
+									if(!this.__isInsideCapsuleFolder()) return;
 									const userInput = this.__askForMissingParameters(this.CLI['response add'], { nlgID, responseDisplay, responseSpoken });
 									if(userInput.isNecessary) return;
 
@@ -158,9 +191,10 @@ class BixbyToolkit {
 
 									BixbyIO.addEntry(template, entries);
 									BixbyIO.write(this.getPath('nlgFile'), dialogs);
-									console.log("Response added!");
+									console.log(" Response added!");
 								},
 			'response remove': 	(nlgID, responseNr) => {
+									if(!this.__isInsideCapsuleFolder()) return;
 									const userInput = this.__askForMissingParameters(this.CLI['response remove'], { nlgID, responseNr });
 									if(userInput.isNecessary) return;
 
@@ -175,9 +209,10 @@ class BixbyToolkit {
 									}
 
 									BixbyIO.write(this.getPath('nlgFile'), dialogs);
-									console.log(`\nResponse #${responseNr} removed.`);
+									console.log(`\n Response #${responseNr} removed.`);
 								},
 			'vocab add': 		(vocabName, description) => {
+									if(!this.__isInsideCapsuleFolder()) return;
 									const userInput = this.__askForMissingParameters(this.CLI['vocab add'], { vocabName, description });
 									if(userInput.isNecessary) return;
 
@@ -191,15 +226,22 @@ class BixbyToolkit {
 										this.__copyModule('models', 'base/primitive', modelsPath, () => console.log(''))
 									);
 								},
-			'action add': 		(actionName, actionType, description) => {
-									const userInput = this.__askForMissingParameters(this.CLI['action add'], { actionName, actionType, description });
+			'action add': 		(actionName, actionType, actionInput, output, description) => {
+									if(!this.__isInsideCapsuleFolder()) return;
+									const userInput = this.__askForMissingParameters(this.CLI['action add'], { actionName, actionType, actionInput, output, description });
 									if(userInput.isNecessary) return;
 
-									BixbyToolkit.data.currentActionName = actionName;
-									BixbyToolkit.data.currentActionDescription = description;
+									BixbyToolkit.data.actionName = actionName;
+									BixbyToolkit.data.description = description;
+									BixbyToolkit.data.type = actionType;
+									BixbyToolkit.data.outputConcept = output;
 
-									const hasNewEndpoints = TemplateBuilder.copyFileIfDoesntExist(`${this.sourcePath}/endpoints.bxb.dot`, 	this.getPath('resources'), 	BixbyToolkit.data);
-									TemplateBuilder.copyFileIfDoesntExist(`${this.sourcePath}/code/{{_self.currentActionName}}.js.dot`, 	this.getPath('code'), 		BixbyToolkit.data);
+									const hasNewEndpoints = TemplateBuilder.copyFileIfDoesntExist(`${this.sourcePath}/endpoints.bxb.dot`, 				  this.getPath('resources'), 	BixbyToolkit.data);
+									TemplateBuilder.copyFileIfDoesntExist(`${this.sourcePath}/code/{{_self.actionName}}.js.dot`, 						  this.getPath('code'), 		BixbyToolkit.data);
+
+									BixbyToolkit.data.conceptName = output;
+									BixbyToolkit.data.conceptType = 'text';
+									TemplateBuilder.copyFileIfDoesntExist(`${this.sourcePath}/models/base/primitive/{{_self.conceptName}}.model.bxb.dot`, this.getPath('models'), 		BixbyToolkit.data);
 
 									if(!hasNewEndpoints) {
 										const endpointsPath = `${this.getPath('resources')}/endpoints.bxb`;
@@ -209,16 +251,44 @@ class BixbyToolkit {
 										BixbyIO.save(endpoints);
 									}
 
-									console.log(`Action "${actionName}" created.`);
+									console.log(` Action "${actionName}" created.`);
 									TemplateBuilder.printFileList(this.targetPath);
 								},
+			'concept add': 		(concept, type) => {
+									if(!this.__isInsideCapsuleFolder()) return;
+									const userInput = this.__askForMissingParameters(this.CLI['concept add'], { concept });
+									if(userInput.isNecessary) return;
+
+									if('lib' in concept) {
+										const alias = _.findKey(Libs, { appName:concept.lib });
+										const library = _.extend({ alias }, Libs[alias]);
+
+										if(!this.hasLibrary(library)) {
+											this.addLibrary(library);
+											console.log(` ${library.alias} library was missing and has been added to the imports.`);
+										}
+									} else {
+										const userInput = this.__askForMissingParameters(this.CLI['concept add'], { conceptType });
+										if(userInput.isNecessary) return;
+
+										BixbyToolkit.data.conceptName = concept;
+										BixbyToolkit.data.conceptType = conceptType;
+
+										TemplateBuilder.copyFileIfDoesntExist(`${this.sourcePath}/models/base/primitive{{_self.conceptName}}.model.bxb.dot`, this.getPath('models/primitive'), BixbyToolkit.data);
+									}
+								},
 			'library add': 		(library) => {
+									if(!this.__isInsideCapsuleFolder()) return;
 									const userInput = this.__askForMissingParameters(this.CLI['library add'], { library });
 									if(userInput.isNecessary) return;
 
-									this.addLibrary(library);
+									if(!this.hasLibrary(library)) {
+										this.addLibrary(library);
+										console.log(` ${library.alias} library imported.`);
+									} else {
+										throwWarning(`${library.alias} already imported. Command ignored.`);
+									}
 
-									console.log(`${library.alias} library imported.`);
 								},
 			
 			'--version': 		() 	=> 	console.log(__BTK_VERSION),
@@ -239,6 +309,7 @@ class BixbyToolkit {
 
 		this.CLIShortcuts = {
 			cc: 	'capsule create',
+			ca: 	'concept add',
 			rsa: 	'responseset add',
 			ra: 	'response add',
 			rr: 	'response remove',
@@ -247,22 +318,23 @@ class BixbyToolkit {
 			ua: 	'utterance add',
 			h: 		'help',
 			'?': 	'help',
-			va: 	'vocab add',
+			//va: 	'vocab add',
 			'-v': 	'--version'
 		};
 
 		this.CLI.config.description = '\t Retrieve or change configuration using "config [<configName>] [<newValue>]"';
 		this.CLI['capsule create'].description = 'Create a capsule from a template using "capsule create <appName>"';
+		this.CLI['concept add'].description = 'Add a concept from a library or create a new one';
 		this.CLI['responseset add'].description = 'Add a response set to dialog files';
 		this.CLI['response add'].description = '\t Add a response to a response set';
 		this.CLI['response remove'].description = 'Remove a specific response from a response set';
 		this.CLI['action add'].description = '\t Add an action (and according file skeleton structure)';
 		this.CLI['library add'].description = '\t Import a global library for your capsule';
-		this.CLI['vocab add'].description = '\t Add a vocab (and according models)';
+		//this.CLI['vocab add'].description = '\t Add a vocab (and according models)';
 		this.CLI['--version'].description = '\t Get current capsule\'s version number';
 		this.CLI['help'].description = '\t\t Display usage information';
 
-		['capsule', 'responseset', 'response', 'vocab', 'action', 'library', 'utterance'].forEach(name => {
+		['capsule', 'responseset', 'response', /*'vocab', */'action', 'concept', 'library', 'utterance'].forEach(name => {
 			this.CLI[name] = (subCommand, ...options) => {
 				const command = `${name} ${subCommand}`;
 				if(command in this.CLI) {
@@ -312,15 +384,33 @@ class BixbyToolkit {
 		fs.writeFileSync(BixbyToolkit.configPath, JSON.stringify(config, null, 4), 'utf8');
 	} 
 
-	addLibrary(library, version) {
+	addLibrary(library) {
 		const capsulePath = path.join(this.targetPath, 'capsule.bxb');
 		const capsuleBxb = BixbyIO.read(capsulePath);
 		const entryPoint = _.find(capsuleBxb[0].capsule.entries, struc => _.has(struc, 'capsule-imports'));
 		const shortName = library.appName.split('.').slice(-1)[0];
-		const lib = { import: { parameters: library.appName, as: shortName, version: '1.32.0' } };
+		const lib = { import: { parameters: library.appName, as: shortName, version: library.version || '1.0.0' } };
 
 		BixbyIO.addEntry(lib, entryPoint, 'capsule-imports');
 		BixbyIO.write(capsulePath, capsuleBxb);
+	}
+	
+	hasLibrary(library) {
+		const capsuleBxb = BixbyIO.read( path.join(this.targetPath, 'capsule.bxb') );
+		const entryPoint = _.find(capsuleBxb[0].capsule.entries, struc => _.has(struc, 'capsule-imports'));
+
+		let imports = _.get(entryPoint['capsule-imports'], 'entries', false);
+
+		if(!imports) {
+			imports = _.get(entryPoint['capsule-imports'], 'import', false);
+			if(imports) imports = [imports];
+		}
+
+		if(imports) {
+			imports = _.find(imports, { parameters: [library.appName] });
+		}
+
+		return !!imports;
 	}
 
 	__copyModule(module=false, template='base', targetPath=false, onDone=false) {
@@ -336,9 +426,9 @@ class BixbyToolkit {
 		this.__fetchQuestions(basePath);
 		this.__askForTemplateVars(_.filter(BixbyToolkit.questions, 'active'), () => {
 			TemplateBuilder.copyDir(basePath, targetPath, BixbyToolkit.data);
-			if(this.verbose) console.log('Copying from', basePath, 'to', targetPath, '...', this.targetPath);
+			if(this.verbose) console.log(' Copying from', basePath, 'to', targetPath, '...', this.targetPath);
 			TemplateBuilder.renderAllTemplates(targetPath, BixbyToolkit.data);
-			if(!this.silent) console.log(`${this.CLI.activeModule[0].toUpperCase()}${this.CLI.activeModule.slice(1).toLowerCase()} created from ${template} template.`);
+			if(!this.silent) console.log(` ${this.CLI.activeModule[0].toUpperCase()}${this.CLI.activeModule.slice(1).toLowerCase()} created from ${template} template.`);
 
 			TemplateBuilder.printFileList(this.targetPath);
 			onDone && onDone();
@@ -359,48 +449,61 @@ class BixbyToolkit {
 		});
 	}
 
+	__isInsideCapsuleFolder() {
+		const isInside = fs.existsSync(BixbyToolkit.configPath);
+		if(!isInside) {
+			throwError('You are not inside a capsule folder!');
+		}
+		return isInside;
+	}
+
 	__askForMissingParameters(func, parameters) {
 		let isNecessary = false;
 
 		_.each(parameters, (val, parameter) => {
-			if(_.isUndefined(val)) {
+			if(parameter in Prompts) {
 				const prompt = _.cloneDeep(Prompts[parameter]);
-				const count = _.get(this.__askForMissingParameters, `counts.${parameter}`, 0) + 1;
-				const isLoop = !!prompt.loop;
+				
+				if((_.isUndefined(val) && !prompt.optional) || prompt.loop) {
+					const count = _.get(this.__askForMissingParameters, `counts.${parameter}`, 0) + 1;
+					const isLoop = !!prompt.loop;
 
-				if('source' in prompt) {
-					prompt.type = 'autocomplete';
-				} else {
-					prompt.type = 'input';
+					if('source' in prompt) {
+						prompt.type = 'autocomplete';
+					} else {
+						prompt.type = 'input';
+					}
+
+					prompt.name = parameter;
+					isNecessary = true;
+
+					_.set(this.__askForMissingParameters, `counts.${parameter}`, count);
+
+					if(count === 1) {
+						prompt.message = prompt.message.replace(/\[[^\]]+\]/g, '');
+					} else {
+						prompt.message = prompt.message.replace(/[\[\]]/g, '');
+					}
+					//console.log('count', _.get(this.__askForMissingParameters, `counts.${parameter}`, 0));
+
+					inquirer
+						.prompt(prompt)
+						.catch(console.log)
+						.then(answers => {
+							const origParameters = _.cloneDeep(parameters);
+
+							parameters[parameter] = answers[parameter];
+							Prompts.setData(parameter, answers[parameter]);
+							func.apply(this, Object.values(parameters));
+							
+							if(isLoop && answers[parameter].length > 0) {
+								func.apply(this, Object.values(origParameters));
+							}
+						});
+					return false;
 				}
-
-				prompt.name = parameter;
-				isNecessary = true;
-
-				_.set(this.__askForMissingParameters, `counts.${parameter}`, count);
-
-				if(count === 1) {
-					prompt.message = prompt.message.replace(/\[[^\]]+\]/g, '');
-				} else {
-					prompt.message = prompt.message.replace(/[\[\]]/g, '');
-				}
-				//console.log('count', _.get(this.__askForMissingParameters, `counts.${parameter}`, 0));
-
-				inquirer
-					.prompt(prompt)
-					.catch(console.log)
-					.then(answers => {
-						const origParameters = _.cloneDeep(parameters);
-
-						parameters[parameter] = answers[parameter];
-						Prompts.setData(parameter, answers[parameter]);
-						func.apply(this, Object.values(parameters));
-						
-						if(isLoop && answers[parameter].length > 0) {
-							func.apply(this, Object.values(origParameters));
-						}
-					});
-				return false;
+			} else {
+				throwError(`No prompt found for "${parameter}".`);
 			}
 		});
 		return { isNecessary };
@@ -458,5 +561,7 @@ if(cliCommand) {
 		console.log(`	Capsule ${BixbyToolkit.data.app.namespace}.${BixbyToolkit.data.app.name} v${BixbyToolkit.data.app.version}`);
 		console.log(`	${BixbyToolkit.data.app.language} on ${BixbyToolkit.data.app.targetDevice}`);
 		console.log('');
+	} else {
+		throwWarning('You are not inside a capsule!');
 	}
 }

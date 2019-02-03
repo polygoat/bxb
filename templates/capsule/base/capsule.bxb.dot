@@ -1,5 +1,5 @@
 capsule {
-  id ({{_self.the_field('app.namespace', 'bixby', 'Namespace (e.g. your company name)')}}.{{_self.the_field('app.name', 'UnnamedApp', 'Name of the capsule')}}})
+  id ({{_self.the_field('app.namespace', 'bixby', 'Namespace (e.g. your company name)')}}.{{_self.the_field('app.name', 'UnnamedApp', 'Name of the capsule')}})
   version ({{_self.the_field('app.version', '1.0.0', 'Version number')}})
 
   targets {

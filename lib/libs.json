@@ -1,50 +1,62 @@
 {
 	"Business": 	{
 		"appName": "viv.business",
-		"description": ""
+		"description": "",
+		"version": "4.29.0"
 	},
 	"Contact": 		{
 		"appName": "viv.contact",
-		"description": ""
+		"description": "",
+		"version": "2.5123.0"
 	},
 	"DateTime": 	{
 		"appName": "viv.time",
-		"description": ""
+		"description": "",
+		"version": "2.63.9"
 	},
 	"Entity": 		{
 		"appName": "viv.entity",
-		"description": ""
+		"description": "",
+		"version": "3.13.13"
 	},
 	"Geography": 	{
 		"appName": "viv.geo",
-		"description": ""
+		"description": "",
+		"version": "9.6.3"
 	},
 	"Image": 		{
 		"appName": "viv.image",
-		"description": ""
+		"description": "",
+		"version": "2.8.1"
 	},
 	"Measurement": 	{
 		"appName": "viv.measurement",
-		"description": ""
+		"description": "",
+		"version": "2.9.2"
 	},
 	"Money": 		{
 		"appName": "viv.money",
-		"description": ""
+		"description": "",
+		"version": "2.16.19"
 	},
 	"Navigation": 	{
 		"appName": "viv.navigation",
-		"description": ""
+		"description": "",
+		"version": "1.7.17"
 	},
 	"Open Hours": 	{
 		"appName": "viv.openHours",
-		"description": ""
+		"description": "",
+		"version": "3.18.0"
 	},
 	"Profile": 		{
 		"appName": "viv.self",
-		"description": ""
+		"description": "",
+		"version": "3.2.24"
 	},
 	"Rating": 		{
 		"appName": "viv.rating",
-		"description": ""
+		"description": "",
+		"version": "2.14.4"
 	}
 }

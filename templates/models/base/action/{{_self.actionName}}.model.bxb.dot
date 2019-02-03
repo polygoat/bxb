@@ -1,0 +1,7 @@
+action ({{_self.actionName}}) {
+  type ({{_self.type}})
+  
+  description ({{_self.description}})
+
+  output ({{_self.outputConcept}})
+}

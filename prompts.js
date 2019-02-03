@@ -3,6 +3,7 @@ const BixbyIO = require('./BixbyIO');
 const BixbyFormat = require('./lib/BixbyFormat');
 const Libs = require('./lib/libs.json');
 const ActionTypes = require('./lib/actionTypes.json');
+const Concepts = require('./lib/concepts.json');
 const fuzzy = require('fuzzy');
 
 let self = false;
@@ -34,6 +35,17 @@ let __createSuggestions = (input, suggestions) => {
 	}, 1));
 }
 
+let __createLabelsFrom = (entities, labelCallback) => {
+	let suggestions = [];
+	_.each(entities, (entity, key) => {
+		const label = labelCallback(entity, key);
+		data[label] = entity;
+		entity.label = label;
+		suggestions.push(label);
+	});
+	return suggestions;
+}
+
 module.exports = {
 	parent: false,
 	
@@ -45,45 +57,10 @@ module.exports = {
 		data[name] = value;
 	},
 
-	appName: 
+	actionInput:
 	{
-		message: 'Name of the app',
-		default: 'AppName'
-	},
-
-	appNamespace: {
-		message: 	'Namespace (e.g. your company name)',
-		default: 	'bixby'
-	},
-
-	description: 
-	{
-		message: 'Please provide a brief description!'
-	},
-
-	utterance:
-	{
-		loop: 	true,
-		message:'What [other ]utterance do you want your app to support?'
-	},
-
-	nlgID: 	
-	{
-		message: 		'Select the according responset set:',
-		suggestOnly: 	true,
-		source: 		(answersSoFar, input) => {
-							const dialogs = BixbyFormat.dialogs.load(self.getPath('nlgFile'));
-							let suggestions = Object.keys(BixbyIO.read.parsers.dialog.data.NLG_IDs);
-							return __createSuggestions(input, suggestions);
-						},
-		validate: function(val) {
-	        return val ? true : 'No response set found!';
-	    },
-	},
-
-	vocabName:
-	{
-		message: 		'Name of the vocab?'
+		message: 		'Name an[other] input for your action!',
+		loop: 			true
 	},
 	actionName:
 	{
@@ -94,15 +71,53 @@ module.exports = {
 		message: 		'Pick an action type',
 		pageSize: 		8,
 		source: 		function(answersSoFar, input) {
-							let suggestions = [];
-							_.each(ActionTypes['non-transactional'], (type, name) => {
-								suggestions.push(`${_.padEnd(name, 30)}(non-transactional)\t${_.get(type, 'description', '')}`);
-							});
-							_.each(ActionTypes.transactional, (type, name) => {
-								suggestions.push(`${_.padEnd(name, 30)}(transactional)    \t${_.get(type, 'description', '')}`);
-							});
+							let suggestions = __createLabelsFrom(ActionTypes['transactional'], (type, name) => `${_.padEnd(name, 30)}(transactional)    \t${_.get(type, 'description', '')}`);
+
+							suggestions = suggestions.concat(
+								__createLabelsFrom(ActionTypes['non-transactional'], (type, name) => `${_.padEnd(name, 30)}(non-transactional)\t${_.get(type, 'description', '')}`)
+							);
+
 							return __createSuggestions(input, suggestions);
-						}
+						},
+		filter: 		label => data[label] || {}, 
+	},
+
+	appName: 
+	{
+		message: 		'Name of the app',
+		default: 		'AppName'
+	},
+	appNamespace: {
+		message: 		'Namespace (e.g. your company name)',
+		default: 		'bixby'
+	},
+
+	concept:
+	{
+		message: 		'Select a concept to add',
+		source: 		function(answersSoFar, input) {
+							let suggestions = __createLabelsFrom(Concepts, concept => `${_.padEnd(concept.name, 30)}  (${concept.lib})`);
+							
+							suggestions.unshift('New (custom)');
+							return __createSuggestions(input, suggestions);
+						},
+		filter: 		label => data[label] || {},
+		pageSize: 		30
+	},
+	conceptType:
+	{
+		message: 		'Which datatype do you need?',
+		source: 		(answersSoFar, input) => {
+							let suggestions = ['text','boolean','structure','integer'];
+							return __createSuggestions(input, suggestions);
+						},
+		pageSize: 		30
+	},
+
+	description: 
+	{
+		message: 		'Please provide a brief description!',
+		optional: 		true
 	},
 
 	library:
@@ -110,14 +125,34 @@ module.exports = {
 		message: 		'Choose a library!',
 		source: 		function(answersSoFar, input) {
 							let suggestions = Object.keys(Libs);
+							_.each(Libs, (lib, alias) => lib.alias = alias); 
 							return __createSuggestions(input, suggestions);
 						},
-		filter: 		value => __createAsync(() => _.extend({ alias: value }, Libs[value]))
+		filter: 		value => __createAsync(() => Libs[value])
 	},
 
 	newNlgID: {
 		message: 		'Name for the new dialog ID?'
 	},
+	nlgID: 	
+	{
+		message: 		'Select the according responset set:',
+		suggestOnly: 	true,
+		source: 		(answersSoFar, input) => {
+							const dialogs = BixbyFormat.dialogs.load(self.getPath('nlgFile'));
+							let suggestions = Object.keys(_.get(BixbyIO, 'read.parsers.dialog.data.NLG_IDs', {}));
+							return __createSuggestions(input, suggestions);
+						},
+		validate: function(val) {
+	        return val ? true : 'No response set found!';
+	    },
+	},
+
+	output:
+	{
+		message: 		'Name the output of your action!'
+	},
+
 	responseDisplay:		
 	{
 		message: 		'What response do you want to be shown on the screen?'
@@ -149,5 +184,14 @@ module.exports = {
 							return __createSuggestions(input, suggestions);
 						},
 		filter: 		value => __createAsync(() => __suggestions.indexOf(value)+1)
+	},
+	utterance:
+	{
+		loop: 	true,
+		message:'What [other ]utterance do you want your app to support?'
+	},
+	vocabName:
+	{
+		message: 		'Name of the vocab?'
 	}
 }
