@@ -7,10 +7,10 @@
 			"description": "lazy-loading from APIs"
 		},
 		"Search": {
-			"description": ""
+			"description": "search queries yielding result(s)"
 		},
 		"Constructor": {
-			
+			"description": "without JS"
 		}
 	},
 	"non-transactional": {

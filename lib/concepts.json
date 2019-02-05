@@ -5,11 +5,10 @@
 	{ "name": "DateTimeExpression", "lib": "viv.time" },
 	{ "name": "DateTimeInterval", 	"lib": "viv.time" }, 
 	{ "name": "DurationPeriod", 	"lib": "viv.time" },
-	
+
 	{ "name": "Business", 			"lib": "viv.business" },
 	{ "name": "BusinessPhotos",	 	"lib": "viv.business" },
 	{ "name": "BusinessThumbnail", 	"lib": "viv.business" },
-
 
 	{ "name": "Color",  			"lib": "viv.entity" },
 	{ "name": "ImageSet",  			"lib": "viv.entity" },

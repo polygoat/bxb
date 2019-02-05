@@ -1,4 +1,5 @@
 const _ = require('lodash');
+const inquirer = require('inquirer');
 const BixbyIO = require('./BixbyIO');
 const BixbyFormat = require('./lib/BixbyFormat');
 const Libs = require('./lib/libs.json');
@@ -96,19 +97,25 @@ module.exports = {
 	{
 		message: 		'Select a concept to add',
 		source: 		function(answersSoFar, input) {
-							let suggestions = __createLabelsFrom(Concepts, concept => `${_.padEnd(concept.name, 30)}  (${concept.lib})`);
-							
+							let suggestions = __createLabelsFrom(Concepts, concept => concept.lib ? `${_.padEnd(concept.name, 30)}  (${concept.lib})` : concept.name);
+							//console.log('got any suggestions?', suggestions);
 							suggestions.unshift('New (custom)');
 							return __createSuggestions(input, suggestions);
 						},
 		filter: 		label => data[label] || {},
 		pageSize: 		30
 	},
+	conceptName:
+	{
+		message: 		'Name of the concept?',
+		default: 		'MyConcept'
+	},
 	conceptType:
 	{
 		message: 		'Which datatype do you need?',
 		source: 		(answersSoFar, input) => {
-							let suggestions = ['text','boolean','structure','integer'];
+							console.log('taf', answersSoFar);
+							let suggestions = ['name','integer','enum','boolean','structure','decimal','text'];
 							return __createSuggestions(input, suggestions);
 						},
 		pageSize: 		30
