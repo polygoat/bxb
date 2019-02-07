@@ -46,10 +46,12 @@ Builder = {
 							if(isTemplate) {
 								basename = path.basename(filename, '.dot');
 							}
+							
 
-							if(!fs.existsSync(`${targetPath}/${basename}`)) {
+
+							if(!fs.existsSync(path.join(targetPath, basename))) {
 								if(isTemplate) {
-									const file = this.loadTemplate(`${filePath}/${filename}`);
+									const file = this.loadTemplate(`${filePath}/${filename}`, '', targetPath, dataContainer);
 									this.files[filename] = { source: sourcePath, target: path.join(targetPath, basename), content:file };
 									this.renderTemplate(file, filename, targetPath, dataContainer);
 								} else {
@@ -91,10 +93,10 @@ Builder = {
 	loadTemplate: 		function(filePath, basePath, targetPath, dataContainer) {
 							const content = fs.readFileSync(filePath, 'utf8').replace(/[\n]/g,'<br>').replace(/\t/g,'<tab>');
 							const source = path.resolve(filePath);
-							const relPath = path.relative(basePath, this.parseTemplate(source, dataContainer));
-							const target = path.join(targetPath, relPath).replace(/.dot$/, '');
-							const file = {content, source, target};
+							let target = path.join(targetPath, path.basename(source)).replace(/.dot$/, '');
+							target = this.parseTemplate(target, dataContainer);
 
+							const file = {content, source, target};
 							this.files[path.basename(filePath)] = file;
 							//console.log('\t\\' + fileList);	// list created files
 							return file;

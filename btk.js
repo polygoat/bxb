@@ -259,40 +259,29 @@ class BixbyToolkit {
 									const userInput = this.__askForMissingParameters(this.CLI['concept add'], { concept });
 									if(userInput.isNecessary) return;
 
-									console.log('concept', concept);
+									if(_.isString(concept)) {
+										const userInput = this.__askForMissingParameters(this.CLI['concept add'], { concept, conceptType });
+										if(userInput.isNecessary) return;
 
-									if('lib' in concept) {
+										BixbyToolkit.data.conceptName = concept;
+										BixbyToolkit.data.conceptType = conceptType;
+
+										const types = { primitives: '' };
+
+										TemplateBuilder.copyFileIfDoesntExist(`${this.sourcePath}/models/base/primitive/{{_self.conceptName}}.model.bxb.dot`, this.getPath('models/primitive'), BixbyToolkit.data);
+										console.log(` Concept ${concept} added.`);
+									} else if('lib' in concept) {
 										const alias = _.findKey(Libs, { appName:concept.lib });
 										const library = _.extend({ alias }, Libs[alias]);
 
 										if(!this.hasLibrary(library)) {
 											this.addLibrary(library);
-											console.log(` ${library.alias} library was missing and has been added to the imports.`);
+											console.log(` ${library.alias} library was missing and has been added to the imports. You can now start using ${concept.name} in your capsule.`);
 										}
 									} else {
 										let conceptName = concept.name;
 										const userInput = this.__askForMissingParameters(this.CLI['concept add'], { conceptName });
 										if(userInput.isNecessary) return;
-
-										console.log('userInput', userInput, conceptName);
-
-										/*
-										if(concept.name === 'Constructor') {
-											conceptType = 'Constructor';
-										} else {
-											let params = { concept };
-											if(_.isUndefined(concept.name)) {
-												params.conceptName = null;
-											}
-											const userInput = this.__askForMissingParameters(this.CLI['concept add'], params);
-											if(userInput.isNecessary) return;
-										}
-
-										BixbyToolkit.data.conceptName = concept;
-										BixbyToolkit.data.conceptType = conceptType;
-
-										TemplateBuilder.copyFileIfDoesntExist(`${this.sourcePath}/models/base/primitive{{_self.conceptName}}.model.bxb.dot`, this.getPath('models/primitive'), BixbyToolkit.data);
-										*/
 									}
 								},
 			'library add': 		(library) => {
