@@ -114,7 +114,6 @@ module.exports = {
 	{
 		message: 		'Which datatype do you need?',
 		source: 		(answersSoFar, input) => {
-							console.log('taf', answersSoFar);
 							let suggestions = ['name','integer','enum','boolean','structure','decimal','text'];
 							return __createSuggestions(input, suggestions);
 						},

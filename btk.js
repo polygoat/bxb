@@ -150,15 +150,17 @@ class BixbyToolkit {
 									const userInput = this.__askForMissingParameters(this.CLI['utterance add'], { utterance });
 									if(userInput.isNecessary) return;
 									
-									const hints = BixbyIO.read(this.getPath('resources', `${BixbyToolkit.data.app.name}.hints.bxb`));
-									
-									console.log('H', hints[0].hints);
+									if(!_.isEmpty(utterance)) {
+										const hints = BixbyIO.read(this.getPath('resources', `${BixbyToolkit.data.app.name}.hints.bxb`));
+										
+										console.log('H', hints[0].hints);
 
-									BixbyIO.addEntry({ utterance }, hints[0].hints, 'hint-set');
+										BixbyIO.addEntry({ utterance }, hints[0].hints, 'hint-set');
 
-									console.log('new hints', JSON.stringify(hints, null, 4));
+										console.log('new hints', JSON.stringify(hints, null, 4));
 
-									BixbyIO.save(hints);
+										BixbyIO.save(hints);
+									}
 								},
 			'responseset add': 	(newNlgID, ...options) => {
 									if(!this.__isInsideCapsuleFolder()) return;
@@ -223,7 +225,7 @@ class BixbyToolkit {
 									const modelsPath = this.getPath('models', 	 'primitive/');
 
 									this.__copyModule('vocab', 'base', vocabPath, () =>
-										this.__copyModule('models', 'base/primitive', modelsPath, () => console.log(''))
+										this.__copyModule('models', 'base', modelsPath, () => console.log(''))
 									);
 								},
 			'action add': 		(actionName, actionType, actionInput, output, description) => {
@@ -266,9 +268,10 @@ class BixbyToolkit {
 										BixbyToolkit.data.conceptName = concept;
 										BixbyToolkit.data.conceptType = conceptType;
 
-										const types = { primitives: '' };
+										console.log();
+										const subDir = conceptType === 'struc' ? '' : 'primitive/';
 
-										TemplateBuilder.copyFileIfDoesntExist(`${this.sourcePath}/models/base/primitive/{{_self.conceptName}}.model.bxb.dot`, this.getPath('models/primitive'), BixbyToolkit.data);
+										TemplateBuilder.copyFileIfDoesntExist(`${this.sourcePath}/models/base/{{_self.conceptName}}.model.bxb.dot`, this.getPath(`models/${subDir}`), BixbyToolkit.data);
 										console.log(` Concept ${concept} added.`);
 									} else if('lib' in concept) {
 										const alias = _.findKey(Libs, { appName:concept.lib });
@@ -297,7 +300,20 @@ class BixbyToolkit {
 									}
 
 								},
-			
+			'test': 			()	=> {
+				const def = BixbyFormat.dialogs.createGrammarDefinition('case', {
+					locative: 'in den Vereinigten Staaten',
+					allative: 'in die Vereinigten Staaten',
+					ablative: 'von den Vereinigten Staaten',
+					default:  {
+						plural: 'die Vereinigten Staaten',
+						singular: 'der Vereinigte Staat'
+					}
+				});
+				console.log('def', JSON.stringify(def, null, 4));
+				BixbyIO.write('macro-logic-locations.dialog.bxb', def);
+			},
+
 			'--version': 		() 	=> 	console.log(__BTK_VERSION),
 			'help': 			() 	=>	{
 											console.log(' Thanks for using \x1b[46m\x1b[30mBixbyToolkit\x1b[0m! Here\'s a list of available commands:');
@@ -470,8 +486,8 @@ class BixbyToolkit {
 		_.each(parameters, (val, parameter) => {
 			if(parameter in Prompts) {
 				const prompt = _.cloneDeep(Prompts[parameter]);
-				
-				if((_.isUndefined(val) && !prompt.optional) || prompt.loop) {
+
+				if((_.isUndefined(val) && !prompt.optional) || (_.isEmpty(val) && !prompt.loop)) {
 					const count = _.get(this.__askForMissingParameters, `counts.${parameter}`, 0) + 1;
 					const isLoop = !!prompt.loop;
 
