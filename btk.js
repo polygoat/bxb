@@ -310,7 +310,8 @@ class BixbyToolkit {
 						singular: 'der Vereinigte Staat'
 					}
 				});
-				console.log('def', JSON.stringify(def, null, 4));
+
+				BixbyIO.write('macro-logic-locations.dialog.json', def);
 				BixbyIO.write('macro-logic-locations.dialog.bxb', def);
 			},
 
