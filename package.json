@@ -4,7 +4,7 @@
   "description": "CLI tools for easy bootstrapping of capsules for Samsung's voice assistant Bixby",
   "main": "btk.js",
   "scripts": {
-    "pkg": "pkg btk.js --target=node8-win-x64 -o bixbytk.exe",
+    "pkg": "pkg btk.js --target=node8-win-x64 -o dist/bxb.exe",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "bin": {
@@ -33,6 +33,7 @@
     "inquirer-autocomplete-prompt": "^1.0.1",
     "inquirer-prompt-suggest": "^0.1.0",
     "lodash": "^4.17.11",
+    "nexe": "^2.0.0-rc.34",
     "node-glob": "^1.2.0"
   }
 }

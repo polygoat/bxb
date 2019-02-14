@@ -12,6 +12,7 @@ const TemplateBuilder = require('./TemplateBuilder');
 const BixbyIO = require('./BixbyIO');
 const BixbyFormat = require('./lib/BixbyFormat');
 const Utils = require('./lib/utils');
+
 const Prompts = require('./prompts');
 const Libs = require('./lib/Libs')
 
@@ -300,19 +301,87 @@ class BixbyToolkit {
 									}
 
 								},
-			'test': 			()	=> {
-				const def = BixbyFormat.dialogs.createGrammarDefinition('case', {
-					locative: 'in den Vereinigten Staaten',
-					allative: 'in die Vereinigten Staaten',
-					ablative: 'von den Vereinigten Staaten',
-					default:  {
-						plural: 'die Vereinigten Staaten',
-						singular: 'der Vereinigte Staat'
+			'grammar create': 	(term, ...includes) => {
+				const GRAMMAR_FEATURE_ORDER = ['gender','cases','determinations','numerus'];
+
+				const entities = {
+					'USA': {
+						nominative: 'die Vereinigten Staaten',
+						locative: 'in den Vereinigten Staaten',
+						allative: 'in die Vereinigten Staaten',
+						ablative: 'von den Vereinigten Staaten',
+					},
+					'maledives': {
+						cases: {
+							nominative: { numerus: { 
+								singular: 	'die Maledive', 
+								plural: 	'die Malediven' 
+							}},
+							genitive: 	'der Malediven',
+							dative: 	'den Malediven',
+							accusative: 'den Malediven'
+						}
+					}
+				}
+				
+				let terms = [term];
+				let features = [];
+				let dict = {};
+
+				_.each(includes, termOrGrammar => {
+					if(termOrGrammar in entities) {
+						terms.push(termOrGrammar);
+					} else {
+						features.push(termOrGrammar);
 					}
 				});
 
-				BixbyIO.write('macro-logic-locations.dialog.json', def);
-				BixbyIO.write('macro-logic-locations.dialog.bxb', def);
+				let resolveFeatures = (destination, source) => {
+					if('cases' in source) {
+						destination = _.extend({}, destination || {}, source.cases);
+						delete source.cases;
+					}
+					if('numerus' in source) {
+						destination = _.extend({}, destination || {}, source.numerus);
+						delete source.numerus;
+					}
+					if('genders' in source) {
+						destination = _.extend({}, destination || {}, source.genders);
+						delete source.genders;
+					}
+					if('determinations' in source) {
+						destination = _.extend({}, destination || {}, source.determinations);
+						delete source.determinations;
+					}
+					if('locations' in source) {
+						destination = _.extend({}, destination || {}, source.locations);
+						delete source.locations;
+					}
+
+					destination = _.extend({}, destination || {}, source);
+					return destination;
+				};
+
+				_.each(terms, term => {
+					if(features.length) {
+						const termFeatures = _.pick(entities[term], features);
+						_.each(features, feature => {
+							const extras = _.get(termFeatures, feature);
+							dict[term] = typeof extras === 'string' ? extras : _.extend({}, dict[term] || {}, extras);
+						});
+					} else {
+						dict = resolveFeatures(dict[term], entities[term]);
+					}
+				});
+
+				console.log('terms', dict);
+			},
+			'test': 			()	=> {
+				// const entity = ;
+				// const def = BixbyFormat.dialogs.createGrammarDefinition('case', entity);
+ 				// console.log(_.pick(entity, ['locative', 'default.plural']));
+ 				// BixbyIO.write('macro-logic-locations.dialog.json', def);
+				// BixbyIO.write('macro-logic-locations.dialog.bxb', def);
 			},
 
 			'--version': 		() 	=> 	console.log(__BTK_VERSION),
@@ -358,7 +427,7 @@ class BixbyToolkit {
 		this.CLI['--version'].description = '\t Get current capsule\'s version number';
 		this.CLI['help'].description = '\t\t Display usage information';
 
-		['capsule', 'responseset', 'response', /*'vocab', */'action', 'concept', 'library', 'utterance'].forEach(name => {
+		['capsule', 'responseset', 'response', /*'vocab', */'action', 'concept', 'library', 'utterance', 'grammar'].forEach(name => {
 			this.CLI[name] = (subCommand, ...options) => {
 				const command = `${name} ${subCommand}`;
 				if(command in this.CLI) {
@@ -561,8 +630,19 @@ BixbyToolkit.data = {};
 BixbyToolkit.questions = [];
 BixbyToolkit.configPath = path.join(globals.homePath, '.btk-project');
 
+let AppConfig = {};
+const appPath = path.dirname(process.argv[0]);
+const appConfigPath = path.join(appPath, './config.json');
+
+if(fs.existsSync(appConfigPath)) {
+	AppConfig = JSON.parse(fs.readFileSync(appConfigPath));
+	console.log(' Loaded local config from', appConfigPath);
+}
+
+const templatePath = _.get(AppConfig, 'template-path', path.join( __dirname, 'templates'));
+
 const BTK = new BixbyToolkit({
-	sourcePath: path.join(__dirname, 'templates'),
+	sourcePath: templatePath,
 	targetPath: globals.homePath, 
 	verbose: 	false, 
 });
