@@ -301,87 +301,100 @@ class BixbyToolkit {
 									}
 
 								},
-			'grammar create': 	(term, ...includes) => {
-				const GRAMMAR_FEATURE_ORDER = ['gender','cases','determinations','numerus'];
+			'grammar create': 	(inputCase='*', inputDetm='*', inputNum='*', ...terms) => {
+				const GRAMMAR_FEATURE_ORDER = ['case','determination','numerus'];
 
 				const entities = {
 					'USA': {
-						nominative: 'die Vereinigten Staaten',
-						locative: 'in den Vereinigten Staaten',
-						allative: 'in die Vereinigten Staaten',
-						ablative: 'von den Vereinigten Staaten',
+						nominative: { 
+							given: {
+								singular: 'die Vereinigten Staaten',
+								plural:   'blu'
+							},
+							shown: {
+								singular: 'bla',
+								plural:   'blo'
+							}
+						},
+						locative: {
+							given: { singular: 'in den Vereinigten Staaten'}
+						},
+						allative: {
+							given: { singular: 'in die Vereinigten Staaten'}
+						},
+						ablative: {
+							given: { singular: 'von den Vereinigten Staaten'}
+						},
 					},
 					'maledives': {
-						cases: {
-							nominative: { numerus: { 
+						nominative: { 
+							given: { 
 								singular: 	'die Maledive', 
 								plural: 	'die Malediven' 
-							}},
-							genitive: 	'der Malediven',
-							dative: 	'den Malediven',
-							accusative: 'den Malediven'
+							}
+						},
+						genitive: 	{
+							given: { singular: 'der Malediven' }
+						},
+						dative: 	{
+							given: { singular: 'den Malediven'}
+						},
+						accusative: {
+							given: { singular: 'den Malediven'}
 						}
 					}
 				}
 				
-				let terms = [term];
-				let features = [];
+				let features = [inputCase, inputDetm, inputNum];
 				let dict = {};
 
-				_.each(includes, termOrGrammar => {
-					if(termOrGrammar in entities) {
-						terms.push(termOrGrammar);
-					} else {
-						features.push(termOrGrammar);
-					}
-				});
-
-				let resolveFeatures = (destination, source) => {
-					if('cases' in source) {
-						destination = _.extend({}, destination || {}, source.cases);
-						delete source.cases;
-					}
-					if('numerus' in source) {
-						destination = _.extend({}, destination || {}, source.numerus);
-						delete source.numerus;
-					}
-					if('genders' in source) {
-						destination = _.extend({}, destination || {}, source.genders);
-						delete source.genders;
-					}
-					if('determinations' in source) {
-						destination = _.extend({}, destination || {}, source.determinations);
-						delete source.determinations;
-					}
-					if('locations' in source) {
-						destination = _.extend({}, destination || {}, source.locations);
-						delete source.locations;
-					}
-
-					destination = _.extend({}, destination || {}, source);
-					return destination;
-				};
-
 				_.each(terms, term => {
-					if(features.length) {
-						const termFeatures = _.pick(entities[term], features);
-						_.each(features, feature => {
-							const extras = _.get(termFeatures, feature);
-							dict[term] = typeof extras === 'string' ? extras : _.extend({}, dict[term] || {}, extras);
-						});
-					} else {
-						dict = resolveFeatures(dict[term], entities[term]);
-					}
-				});
+					const entity 			= entities[term];
+					let termValue 			= _.get(entity, features.join('.'));
 
-				console.log('terms', dict);
+					dict[term] = {};
+
+					if(inputCase === '*') {
+						dict[term] = entities[term];
+					} else {
+						dict[term] = _.pick(entities[term], inputCase);
+					}
+
+					if(inputDetm !== '*') {
+						let determinations = {};
+						_.each(dict[term], (dets, termCase) => {
+							determinations[termCase] = _.pick(dets, inputDetm);
+
+
+						});
+						dict[term] = determinations;
+					}
+					
+					if(inputNum !== '*') {
+						_.each(dict[term], (dets, termCase) => {
+							_.each(dets, (nums, termDet) => {
+								console.log(termDet,'.....', nums);
+								dets[termDet] = _.pick(nums, inputNum);
+							});
+						});
+					}
+
+					console.log(dict[term]);
+					console.log('---------------');
+					console.log('\n');
+				});
+				console.log('dict', JSON.stringify(dict, null, 4));
+
+				const grammarDef = BixbyFormat.dialogs.createGrammarDefinition('base', dict);
+				
+
+				//BixbyIO.write('macro-logic-grammar.dialog.bxb', grammarDef);
 			},
 			'test': 			()	=> {
 				// const entity = ;
 				// const def = BixbyFormat.dialogs.createGrammarDefinition('case', entity);
  				// console.log(_.pick(entity, ['locative', 'default.plural']));
  				// BixbyIO.write('macro-logic-locations.dialog.json', def);
-				// BixbyIO.write('macro-logic-locations.dialog.bxb', def);
 			},
 
 			'--version': 		() 	=> 	console.log(__BTK_VERSION),
