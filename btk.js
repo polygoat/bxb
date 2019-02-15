@@ -362,31 +362,23 @@ class BixbyToolkit {
 
 					if(inputDetm !== '*') {
 						let determinations = {};
-						_.each(dict[term], (dets, termCase) => {
-							determinations[termCase] = _.pick(dets, inputDetm);
-						});
+						_.each(dict[term], (dets, termCase) => 
+							determinations[termCase] = _.pick(dets, inputDetm)
+						);
 						dict[term] = determinations;
 					}
 					
 					if(inputNum !== '*') {
-						_.each(dict[term], (dets, termCase) => {
-							_.each(dets, (nums, termDet) => {
-								dets[termDet] = _.pick(nums, inputNum);
-							});
-						});
+						_.each(dict[term], (dets, termCase) => 
+							_.each(dets, (nums, termDet) => 
+								dets[termDet] = _.pick(nums, inputNum)
+							)
+						);
 					}
 				});
-				console.log('dict', JSON.stringify(dict, null, 4));
-
 				const grammarDef = BixbyFormat.dialogs.createGrammarDefinition('base', dict);
 				
 				BixbyIO.write('macro-logic-grammar.dialog.bxb', grammarDef);
-			},
-			'test': 			()	=> {
-				// const entity = ;
-				// const def = BixbyFormat.dialogs.createGrammarDefinition('case', entity);
- 				// console.log(_.pick(entity, ['locative', 'default.plural']));
- 				// BixbyIO.write('macro-logic-locations.dialog.json', def);
 			},
 
 			'--version': 		() 	=> 	console.log(__BTK_VERSION),
