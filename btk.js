@@ -364,8 +364,6 @@ class BixbyToolkit {
 						let determinations = {};
 						_.each(dict[term], (dets, termCase) => {
 							determinations[termCase] = _.pick(dets, inputDetm);
-
-
 						});
 						dict[term] = determinations;
 					}
@@ -373,15 +371,10 @@ class BixbyToolkit {
 					if(inputNum !== '*') {
 						_.each(dict[term], (dets, termCase) => {
 							_.each(dets, (nums, termDet) => {
-								console.log(termDet,'.....', nums);
 								dets[termDet] = _.pick(nums, inputNum);
 							});
 						});
 					}
-
-					console.log(dict[term]);
-					console.log('---------------');
-					console.log('\n');
 				});
 				console.log('dict', JSON.stringify(dict, null, 4));
 
