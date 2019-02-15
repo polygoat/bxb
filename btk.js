@@ -387,8 +387,7 @@ class BixbyToolkit {
 
 				const grammarDef = BixbyFormat.dialogs.createGrammarDefinition('base', dict);
 				
-
-				//BixbyIO.write('macro-logic-grammar.dialog.bxb', grammarDef);
+				BixbyIO.write('macro-logic-grammar.dialog.bxb', grammarDef);
 			},
 			'test': 			()	=> {
 				// const entity = ;
